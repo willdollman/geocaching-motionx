@@ -2,44 +2,41 @@
 // @name           Geocaching.com-MotionX connector
 // @author         Will
 // @license        ?
-// @include        http://geocaching.com/*
-// @include        http://www.geocaching.com/*
+// @include        http://geocaching.com/seek/*
+// @include        http://www.geocaching.com/seek/*
 // @run-at	       document-end
 // ==/UserScript==
 
-    var link = document.createElement('a');
-    link.href = "http://www.example.com";
-    link.appendChild(document.createTextNode("Click Me"));
-    var targetNode = document.getElementById('ctl00_ContentBody_lnkPrintDirectionsSimple');
-	//targetNode.parentNode.insertBefore(link, targetNode);
+    // ...
+    drawButtons();
 
+function drawButtons()
+{
+    var addQueueButton = document.createElement('input');
+    addQueueButton.setAttribute('id', 'addQueueButton');
+    addQueueButton.setAttribute('type', 'button');
+    addQueueButton.setAttribute('value', 'Add to Queue');
+    addQueueButton.setAttribute('onClick', "addToQueue()");
+    if (isCacheQueued()) addQueueButton.setAttribute('disabled', 'disabled');
+    var queueTargetNode = document.getElementById('Download');
+	queueTargetNode.parentNode.insertBefore(addQueueButton, queueTargetNode);
 
-    var queueButton = document.createElement('input');
-    if ( cacheQueued() ) {
-        queueButton.setAttribute('disabled', 'disabled');
-    }
-    queueButton.setAttribute('id', 'addQueueButton');
-    queueButton.setAttribute('type', 'button');
-    queueButton.setAttribute('value', 'Add to Queue');
-    queueButton.setAttribute('onClick', "storePageGeocache()");
-    var queueTargetNode = document.getElementById('ctl00_ContentBody_lnkPrintDirectionsSimple');
-	queueTargetNode.parentNode.insertBefore(queueButton, queueTargetNode);
-
-    var queueButton = document.createElement('input');
-    queueButton.setAttribute('id', 'sendQueueButton');
-    queueButton.setAttribute('type', 'button');
-    queueButton.setAttribute('value', "Send Queue ("+ retrieveGeocache().length +")");
-    queueButton.setAttribute('onClick', "postGeocache()");
-    var queueTargetNode = document.getElementById('ctl00_ContentBody_lnkPrintDirectionsSimple');
-	queueTargetNode.parentNode.insertBefore(queueButton, queueTargetNode);
-
+    var sendQueueButton = document.createElement('input');
+    sendQueueButton.setAttribute('id', 'sendQueueButton');
+    sendQueueButton.setAttribute('type', 'button');
+    sendQueueButton.setAttribute('value', "Send Queue ("+ retrieveGeocache().length +")");
+    sendQueueButton.setAttribute('onClick', "postGeocache()");
+    if (0 == retrieveGeocache().length) sendQueueButton.setAttribute('disabled', 'disabled');
+    var queueTargetNode = document.getElementById('Download'); // ctl00_ContentBody_lnkPrintDirectionsSimple
+	queueTargetNode.parentNode.insertBefore(sendQueueButton, queueTargetNode);
+}
 
 // return true if cache is in queue
-function cacheQueued()
+function isCacheQueued()
 {
     var geocache = retrieveGeocache();
     
-    // I think a match on both title & location is suitably tight
+    // I think a match on title & location is tight enough
     var cacheTitle    = document.getElementById('ctl00_ContentBody_CacheName').innerText;
     var cacheLocation = document.getElementById('uxLatLon').innerText;
     
@@ -51,6 +48,7 @@ function cacheQueued()
     return false; 
 }
 
+// grab data from localStorage and parse
 function retrieveGeocache()
 {
     var geocache = localStorage.geocache;
@@ -62,11 +60,41 @@ function retrieveGeocache()
         return JSON.parse(geocache);
     }
 }
+
+
+// When the 'Add to Queue' button is clicked
+// scrape the page and save it in localStorage
+unsafeWindow.addToQueue = function()
+{    
+    var geocache = retrieveGeocache();
+    var i = geocache.length;
+
+    geocache[i] = new Object;
+    geocache[i].title     = document.getElementById('ctl00_ContentBody_CacheName').innerText;
+    geocache[i].location  = document.getElementById('uxLatLon').innerText.replace("°","").replace("°","");
+    geocache[i].shortDesc = document.getElementById('ctl00_ContentBody_ShortDescription').innerText;
+    geocache[i].longDesc  = document.getElementById('ctl00_ContentBody_LongDescription').innerText;
+    geocache[i].hint      = document.getElementById('div_hint').innerText;
+
+    console.log(geocache);
+
+    localStorage.geocache = JSON.stringify(geocache);
     
+    // grey out the button that was just clicked
+    var addQueueButtonTarget = document.getElementById('addQueueButton');
+    addQueueButtonTarget.setAttribute('disabled', 'disabled');
+    
+    // recalculate the number of caches in the queue and un-disable
+    var sendQueueButtonTarget = document.getElementById('sendQueueButton');
+    sendQueueButtonTarget.setAttribute('value', "Send Queue ("+ retrieveGeocache().length +")");
+    if (0 != retrieveGeocache().length) {
+        sendQueueButtonTarget.removeAttribute('disabled');
+    }
+}
+    
+// POST the json-ified geocache object to endpoint
 unsafeWindow.postGeocache = function()
 {
-    // this should POST the json-ified geocache object to dollman.org
-    
     var geocache = localStorage.geocache;
     
     if (geocache === undefined) {
@@ -79,45 +107,20 @@ unsafeWindow.postGeocache = function()
         url: "http://dollman.org/geocaching/api.php",
         headers: { "Content-type" : "application/x-www-form-urlencoded" },
         data: encodeURI("geocache_json=" + geocache),
-        //onload: function(e) { alert(e.responseText); }
+        onload: function(e) { 
+            // check for success and set buttons appropriately
+            // what's >= 1 when it's not at home? or a string?
+            if (e.responseText >= 1) {
+                localStorage.clear();
+                var sendQueueButtonTarget = document.getElementById('sendQueueButton');
+                sendQueueButtonTarget.setAttribute('value', "Success! :)");
+                sendQueueButtonTarget.setAttribute('disabled', "disabled");
+                console.log("Successful request: " + e.responseText);
+            } else
+            {
+                console.log(e.responseText);
+                alert(":( something went wrong! (check the console)");
+            }
+        }
     });
-    
-}
-
-// Insecure, should probably fix
-unsafeWindow.storePageGeocache = function()
-{
-    var geo_temp = localStorage.geocache;
-
-    if (geo_temp === undefined) {
-        geocache = new Array();
-        var i = 0;
-        console.log("--- Creating new array");
-    } else
-    {
-        geocache = JSON.parse(geo_temp);
-        var i = geocache.length;
-        console.log("Already got array with " + i + " elements");
-    }
-
-    geocache[i] = new Object;
-    geocache[i].title     = document.getElementById('ctl00_ContentBody_CacheName').innerText;
-    geocache[i].location  = document.getElementById('uxLatLon').innerText;
-    geocache[i].shortDesc = document.getElementById('ctl00_ContentBody_ShortDescription').innerText;
-    geocache[i].longDesc  = document.getElementById('ctl00_ContentBody_LongDescription').innerText;
-    geocache[i].hint      = document.getElementById('div_hint').innerText;
-
-    console.log(geocache);
-
-    localStorage.geocache = JSON.stringify(geocache);
-    
-    // grey out the button that was just clicked
-    var addQueueButtonTarget = document.getElementById('addQueueButton');
-    console.log("disabling button...");
-    addQueueButtonTarget.setAttribute('disabled', 'disabled');
-    
-    // recalculate the number of caches in the queue
-    var sendQueueButtonTarget = document.getElementById('sendQueueButton');
-    console.log("updating queuecount button...");
-    sendQueueButtonTarget.setAttribute('value', "Send Queue ("+ retrieveGeocache().length +")");
 }
