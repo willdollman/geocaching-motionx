@@ -15,11 +15,7 @@ $geocache = json_decode($geocache_json);
 //loop through geocache[ ]'s
 $geoXML[0] = geocachetoXML($geocache);
 
-print "XML is:<br><br>$geoXML[0]";
-
-print "Number of waypoints: ". multi_attach_mail("will@dollman.org", $geoXML, "will@dollman.org", count($geocache));
-
-
+print multi_attach_mail("will@dollman.org", $geoXML, "will@dollman.org", count($geocache));
 
 
 // Make sure that all variables are encoded to REMOVE XML characters!
@@ -57,7 +53,7 @@ $geodata->{longitude} = -1 * DMStoDEC( $coordPart[3], $coordPart[4], 0 );
 $waypointData = <<<EOD
 <wpt lat="{$geodata->{latitude}}" lon="{$geodata->{longitude}}">
 <name>{$geodata->{title}}</name>
-<desc>{$geodata->{shortDesc}} ||| {$geodata->{longDesc}}</desc>
+<desc>{$geodata->{shortDesc}}\n---\n{$geodata->{longDesc}}\n---\nHint: {$geodata->{hint}}</desc>
 </wpt>
 
 EOD;
