@@ -15,6 +15,10 @@
 
 
     var queueButton = document.createElement('input');
+    if ( cacheQueued() ) {
+        queueButton.setAttribute('disabled', 'disabled');
+    }
+    queueButton.setAttribute('id', 'addQueueButton');
     queueButton.setAttribute('type', 'button');
     queueButton.setAttribute('value', 'Add to Queue');
     queueButton.setAttribute('onClick', "storePageGeocache()");
@@ -22,17 +26,43 @@
 	queueTargetNode.parentNode.insertBefore(queueButton, queueTargetNode);
 
     var queueButton = document.createElement('input');
+    queueButton.setAttribute('id', 'sendQueueButton');
     queueButton.setAttribute('type', 'button');
-    queueButton.setAttribute('value', 'Send to MotionX');
+    queueButton.setAttribute('value', "Send Queue ("+ retrieveGeocache().length +")");
     queueButton.setAttribute('onClick', "postGeocache()");
     var queueTargetNode = document.getElementById('ctl00_ContentBody_lnkPrintDirectionsSimple');
 	queueTargetNode.parentNode.insertBefore(queueButton, queueTargetNode);
 
-    //storePageGeocache();
-    //<button onclick="storePageGeocache()">Add page to queue</button>
-    //postGeocache();
 
+// return true if cache is in queue
+function cacheQueued()
+{
+    var geocache = retrieveGeocache();
+    
+    // I think a match on both title & location is suitably tight
+    var cacheTitle    = document.getElementById('ctl00_ContentBody_CacheName').innerText;
+    var cacheLocation = document.getElementById('uxLatLon').innerText;
+    
+    for (var i=0; i<geocache.length; i++) {
+        if ( cacheTitle == geocache[i].title && cacheLocation == geocache[i].location ) {
+            return true;
+        }
+    }
+    return false; 
+}
 
+function retrieveGeocache()
+{
+    var geocache = localStorage.geocache;
+    
+    if (geocache === undefined) {
+        return new Array();
+    } else
+    {
+        return JSON.parse(geocache);
+    }
+}
+    
 unsafeWindow.postGeocache = function()
 {
     // this should POST the json-ified geocache object to dollman.org
@@ -80,4 +110,14 @@ unsafeWindow.storePageGeocache = function()
     console.log(geocache);
 
     localStorage.geocache = JSON.stringify(geocache);
+    
+    // grey out the button that was just clicked
+    var addQueueButtonTarget = document.getElementById('addQueueButton');
+    console.log("disabling button...");
+    addQueueButtonTarget.setAttribute('disabled', 'disabled');
+    
+    // recalculate the number of caches in the queue
+    var sendQueueButtonTarget = document.getElementById('sendQueueButton');
+    console.log("updating queuecount button...");
+    sendQueueButtonTarget.setAttribute('value', "Send Queue ("+ retrieveGeocache().length +")");
 }
