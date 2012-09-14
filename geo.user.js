@@ -25,7 +25,7 @@ function drawButtons()
     sendQueueButton.setAttribute('id', 'sendQueueButton');
     sendQueueButton.setAttribute('type', 'button');
     sendQueueButton.setAttribute('value', "Send Queue ("+ retrieveGeocache().length +")");
-    sendQueueButton.setAttribute('onClick', "postGeocache()");
+    sendQueueButton.setAttribute('onClick', "postQueue()");
     if (0 == retrieveGeocache().length) sendQueueButton.setAttribute('disabled', 'disabled');
     var queueTargetNode = document.getElementById('Download'); // ctl00_ContentBody_lnkPrintDirectionsSimple
 	queueTargetNode.parentNode.insertBefore(sendQueueButton, queueTargetNode);
@@ -38,7 +38,7 @@ function isCacheQueued()
     
     // I think a match on title & location is tight enough
     var cacheTitle    = document.getElementById('ctl00_ContentBody_CacheName').innerText;
-    var cacheLocation = document.getElementById('uxLatLon').innerText;
+    var cacheLocation = document.getElementById('uxLatLon').innerText.replace("°","").replace("°","");
     
     for (var i=0; i<geocache.length; i++) {
         if ( cacheTitle == geocache[i].title && cacheLocation == geocache[i].location ) {
@@ -93,7 +93,7 @@ unsafeWindow.addToQueue = function()
 }
     
 // POST the json-ified geocache object to endpoint
-unsafeWindow.postGeocache = function()
+unsafeWindow.postQueue = function()
 {
     var geocache = localStorage.geocache;
     
@@ -106,7 +106,7 @@ unsafeWindow.postGeocache = function()
         method: "post",
         url: "http://dollman.org/geocaching/api.php",
         headers: { "Content-type" : "application/x-www-form-urlencoded" },
-        data: encodeURI("geocache_json=" + geocache),
+        data: "geocache_json=" + encodeURIComponent(geocache),
         onload: function(e) { 
             // check for success and set buttons appropriately
             // what's >= 1 when it's not at home? or a string?
