@@ -50,6 +50,11 @@ preg_match('/N\s(\d*)\s([\d.]*)\sW\s(\d*)\s([\d.]*)/', $geodata->{location}, $co
 $geodata->{latitude} = DMStoDEC( $coordPart[1], $coordPart[2], 0 );
 $geodata->{longitude} = -1 * DMStoDEC( $coordPart[3], $coordPart[4], 0 );
 
+// Encode XML characters
+foreach ($geodata as &$point) {
+    $point = xmlentities($point);
+}
+
 $waypointData = <<<EOD
 <wpt lat="{$geodata->{latitude}}" lon="{$geodata->{longitude}}">
 <name>{$geodata->{title}}</name>
@@ -126,6 +131,12 @@ function multi_attach_mail($to, $geodata, $sendermail, $geoCount)
     $returnpath = "-f" . $sendermail;
     $ok = @mail($to, $subject, $message, $headers); 
     if($ok){ return $i; } else { return 0; }
+}
+
+
+function xmlentities($string) {
+    return str_replace(array("&", "<", ">", "\"", "'"),
+        array("and", "(lt)", "(gt)", "`", "`"), $string);
 }
 
 ?>
