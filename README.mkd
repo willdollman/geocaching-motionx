@@ -1,0 +1,8 @@
+This is a neat little service that simplifies getting geocache data onto your smartphone (from a well-known geocaching website).
+Rather than manually entering the coordinates for each cache, you can just hit a button - the coordinates and description are sent to your phone.
+
+It consists of a Greasemonkey script (currently only tested in Chrome), and a PHP script (which should be popped on a handy server).
+The Greasemonkey script adds a couple of buttons to cache pages. These allow you to queue up caches, and then send this queue off to the PHP script. 
+Your queue then gets bundled up into a .gpx file and emailed to you. From there, you can open it in your GPS app of choice.
+
+Why use this instead of the official app? Other GPS apps offer some nice conveniences like downloadable maps and track recording.
