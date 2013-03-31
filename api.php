@@ -45,10 +45,14 @@ EOD;
 function createWaypoint($geodata)
 {
 
-preg_match('/N\s(\d*)\s([\d.]*)\sW\s(\d*)\s([\d.]*)/', $geodata->{location}, $coordPart);
+preg_match('/N\s(\d*)\s([\d.]*)\s([EW])\s(\d*)\s([\d.]*)/', $geodata->{location}, $coordPart);
 
 $geodata->{latitude} = DMStoDEC( $coordPart[1], $coordPart[2], 0 );
-$geodata->{longitude} = -1 * DMStoDEC( $coordPart[3], $coordPart[4], 0 );
+$geodata->{longitude} = -1 * DMStoDEC( $coordPart[4], $coordPart[5], 0 );
+
+if ($coordPart[3] == "E") {
+    $geodata->{longitude} *= -1;
+}
 
 // Encode XML characters
 foreach ($geodata as &$point) {
