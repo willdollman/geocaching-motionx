@@ -1,0 +1,10 @@
+<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" creator="MotionXGPSFull 19.1 Build 4444R">
+<wpt lat="51.5070036" lon="-0.1261851">
+<name>Test point 1</name>
+<desc>This is short desc ||| This is long descr</desc>
+</wpt>
+<wpt lat="51.0" lon="-1.0">
+<name>Testpoint2</name>
+<desc>I'll keep it short</desc>
+</wpt>
+</gpx>
